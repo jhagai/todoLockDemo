@@ -1,0 +1,21 @@
+<div class="container-fluid">
+  <div class="todo-container col-xs-12 col-md-6">
+
+    <div class="navbar navbar-light bg-light">
+      <span class="navbar-brand">Todo app</span>
+      <span *ngIf="authService.claims">
+        <i class="fa fa-user"></i>&nbsp;{{authService.claims.login}}
+        <button type="button" class="btn btn-danger" (click)="logout()" [disabled]="loggingOut">
+          <i class="fa fa-power-off" *ngIf="!loggingOut"></i>
+          <i class="fa fa-spinner fa-spin" *ngIf="loggingOut"></i>
+        </button>
+      </span>
+    </div>
+    <div style="margin-top:10px;">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
+
+
+

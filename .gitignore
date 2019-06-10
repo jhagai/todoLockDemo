@@ -1,0 +1,49 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+front/dist
+front/tmp
+front/out-tsc
+
+# dependencies
+/node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.idea
+*.iws
+*.iml
+*.ipr
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/sks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+front/.sass-cache
+front/connect.lock
+front/coverage
+front/libpeerconnection.log
+front/npm-debug.log
+front/yarn-error.log
+front/testem.log
+front/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+### Maven ###
+back/.mvn
+back/mvnw
+back/mvnw.cmd
+back/target

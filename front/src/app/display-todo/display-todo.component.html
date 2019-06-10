@@ -1,0 +1,26 @@
+<ng-container *ngIf="todo$ | async as todo">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a [routerLink]="['/', 'dashboard']">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">View {{ todo.title }}</li>
+    </ol>
+  </nav>
+
+  <h1>
+    Display todo
+    <span class="pull-right">
+    <a [routerLink]="['/', 'edit', todo.id]"><i class="fa fa-edit"></i></a>
+  </span>
+  </h1>
+  <div>
+    <b>Title</b>
+    <div>{{todo.title}}</div>
+  </div>
+  <div>
+    <b>Text</b>
+    <div>
+      <pre>{{todo.text}}</pre>
+    </div>
+  </div>
+
+</ng-container>

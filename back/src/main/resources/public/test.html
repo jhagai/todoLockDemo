@@ -1,0 +1,19 @@
+<html>
+<head>
+</head>
+<body>
+<script>
+
+  const source = new EventSource('http://localhost:8090/api/flux2', {withCredentials: true});
+
+  source.addEventListener('open', function (e) {
+    console.log('open', e);
+  });
+
+  source.addEventListener('lock', function (e) {
+    console.log('message', e);
+  });
+
+</script>
+</body>
+</html>
