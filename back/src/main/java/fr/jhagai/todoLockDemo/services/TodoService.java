@@ -91,26 +91,6 @@ public class TodoService {
         }).orElse(null);
     }
 
-    @Transactional(readOnly = true)
-    public Long lockTimeLeft(final Long userId, final Long todoId) {
-        final Optional<TodoLock> byTodoId = this.todoLockRepository.findByTodoId(todoId);
-        // @TODO deal with null
-        final TodoLock todoLock = byTodoId.get();
-        return todoLock.getEndDate().until(LocalDateTime.now(), ChronoUnit.SECONDS);
-    }
-
-    @Transactional(readOnly = true)
-    public LockInfo getLockInfo(final Long todoId) {
-        Optional<TodoLock> byTodoId = this.todoLockRepository.findByTodoId(todoId);
-        // @TODO deal with null
-        final TodoLock todoLock = byTodoId.get();
-        return new LockInfo(todoLock.getUser().getId(),
-                todoLock.getUser().getLogin(),
-                todoLock.getEndDate(),
-                todoLock.getCount()
-        );
-    }
-
     @Transactional
     public Todo tryToUpdate(final Long userId, final TodoDto todo) throws StaleTodoException, LockedTodoException, TodoNotFoundException {
         final boolean hasLock = hasLock(userId, todo.getId());
