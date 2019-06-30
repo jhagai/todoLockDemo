@@ -16,9 +16,11 @@ public class TodoUtils {
         todoDto.setText(todo.getText());
         todoDto.setVersion(todo.getVersion());
 
-        final TodoLock todoLock = todo.getTodoLock();
-        final TodoLockDto todoLockDto = todoLock != null ? mapToDto(todoLock) : null;
-        todoDto.setTodoLock(todoLockDto);
+        if (todo.isLocked()) {
+            final TodoLock todoLock = todo.getTodoLock();
+            final TodoLockDto todoLockDto = mapToDto(todoLock);
+            todoDto.setTodoLock(todoLockDto);
+        }
 
         return todoDto;
     }
@@ -26,11 +28,10 @@ public class TodoUtils {
     public static TodoLockDto mapToDto(TodoLock todoLock) {
 
         final TodoLockDto todoLockDto = new TodoLockDto();
-        todoLockDto.setId(todoLock.getId());
-        todoLockDto.setVersion(todoLock.getVersion());
         todoLockDto.setEndDate(todoLock.getEndDate());
         todoLockDto.setCount(todoLock.getCount());
         final User user = todoLock.getUser();
+
         UserDto userDto = new UserDto();
         userDto.setUserId(user.getId());
         userDto.setLogin(user.getLogin());

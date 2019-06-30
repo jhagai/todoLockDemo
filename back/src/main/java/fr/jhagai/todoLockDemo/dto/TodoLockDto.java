@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 @Data
 public class TodoLockDto {
 
-    private Long id;
-    private Long version;
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime endDate;

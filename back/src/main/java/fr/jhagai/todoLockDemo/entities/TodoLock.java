@@ -1,5 +1,6 @@
 package fr.jhagai.todoLockDemo.entities;
 
+import fr.jhagai.todoLockDemo.utils.LocalDateTimeConverter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -8,29 +9,16 @@ import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode
-@Entity
-@Table(name = "TODO_LOCK")
+@Embeddable
 public class TodoLock {
 
-    @Id
-    @EqualsAndHashCode.Include
-    private Long id;
-
-    @Version
-    @Column(nullable = false)
-    private Long version;
-
-    @Column(nullable = false)
+    @Convert(converter = LocalDateTimeConverter.class)
+    @Column()
     private LocalDateTime endDate;
 
     @Column(nullable = false)
     private Long count;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = true)
     private User user;
-
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "ID")
-    private Todo todo;
 }

@@ -2,13 +2,13 @@ package fr.jhagai.todoLockDemo;
 
 import fr.jhagai.todoLockDemo.dto.CreateTodoDto;
 import fr.jhagai.todoLockDemo.dto.TodoDto;
-import fr.jhagai.todoLockDemo.dto.TodoLockDto;
 import fr.jhagai.todoLockDemo.entities.Todo;
 import fr.jhagai.todoLockDemo.exceptions.LockedTodoException;
 import fr.jhagai.todoLockDemo.exceptions.StaleTodoException;
 import fr.jhagai.todoLockDemo.exceptions.TodoNotFoundException;
+import fr.jhagai.todoLockDemo.exceptions.TodoNotLockedException;
 import fr.jhagai.todoLockDemo.security.TodoPrincipal;
-import fr.jhagai.todoLockDemo.services.TodoService;
+import fr.jhagai.todoLockDemo.services.ITodoService;
 import fr.jhagai.todoLockDemo.utils.TodoUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,7 +32,7 @@ public class TodoController {
     public static final long LOCK_DURATION = 60;
 
     @Autowired
-    private TodoService todoService;
+    private ITodoService todoService;
 
     @GetMapping(path = "/todos", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<TodoDto>> listTodos() {
@@ -105,6 +105,10 @@ public class TodoController {
             return ResponseEntity.ok(locked);
         } catch (LockedTodoException e) {
             return ResponseEntity.status(HttpStatus.LOCKED).body(e.getTodo());
+        } catch (TodoNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (StaleTodoException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 
@@ -118,10 +122,14 @@ public class TodoController {
         final TodoPrincipal userPrincipal = getTodoPrincipal(servletRequest);
         final Long userId = userPrincipal.getUserId();
         try {
-            final TodoLockDto todoLockDto = todoService.refreshLock(userId, todoId);
-            return ResponseEntity.ok(todoLockDto);
+            final TodoDto todoDto = todoService.refreshLock(userId, todoId);
+            return ResponseEntity.ok(todoDto);
         } catch (LockedTodoException e) {
             return ResponseEntity.status(HttpStatus.LOCKED).build();
+        } catch (TodoNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (TodoNotLockedException e) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build();
         }
     }
 
@@ -137,6 +145,8 @@ public class TodoController {
             return ResponseEntity.status(HttpStatus.LOCKED).build();
         } catch (TodoNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (StaleTodoException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 

@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -26,6 +27,12 @@ public class Todo {
     @Column(nullable = false)
     private Long version;
 
-    @OneToOne(mappedBy = "todo")
+    @Embedded
     private TodoLock todoLock;
+
+    public boolean isLocked() {
+        return getTodoLock().getCount() > 0
+                && getTodoLock().getEndDate() != null
+                && LocalDateTime.now().isBefore(getTodoLock().getEndDate());
+    }
 }
