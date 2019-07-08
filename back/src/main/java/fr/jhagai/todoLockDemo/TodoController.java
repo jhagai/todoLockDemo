@@ -147,6 +147,8 @@ public class TodoController {
             return ResponseEntity.notFound().build();
         } catch (StaleTodoException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (TodoNotLockedException e) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build();
         }
     }
 

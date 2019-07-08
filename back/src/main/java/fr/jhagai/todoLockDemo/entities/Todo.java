@@ -27,12 +27,16 @@ public class Todo {
     @Column(nullable = false)
     private Long version;
 
-    @Embedded
+    @OneToOne(mappedBy = "todo", cascade = CascadeType.REMOVE)
     private TodoLock todoLock;
 
     public boolean isLocked() {
-        return getTodoLock().getCount() > 0
-                && getTodoLock().getEndDate() != null
-                && LocalDateTime.now().isBefore(getTodoLock().getEndDate());
+        return getTodoLock() != null &&
+                getTodoLock().isActive();
+    }
+
+    public boolean hasLock(User user) {
+        final TodoLock todoLock = getTodoLock();
+        return todoLock != null && todoLock.hasLock(user);
     }
 }

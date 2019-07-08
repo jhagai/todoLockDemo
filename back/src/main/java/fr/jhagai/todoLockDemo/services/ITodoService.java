@@ -33,5 +33,5 @@ public interface ITodoService {
     TodoDto refreshLock(Long userId, Long todoId) throws LockedTodoException, TodoNotFoundException, TodoNotLockedException;
 
     @Transactional
-    void unlock(Long userId, Long todoId) throws TodoNotFoundException, LockedTodoException, StaleTodoException;
+    void unlock(Long userId, Long todoId) throws TodoNotFoundException, LockedTodoException, StaleTodoException, TodoNotLockedException;
 }
