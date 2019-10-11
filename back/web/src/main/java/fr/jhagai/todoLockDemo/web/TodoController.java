@@ -102,8 +102,6 @@ public class TodoController {
             return ResponseEntity.status(HttpStatus.LOCKED).body(e.getTodo());
         } catch (TodoNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (StaleTodoException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 
@@ -151,8 +149,8 @@ public class TodoController {
 
     @PostMapping(path = "/todos/{todoId}/unlockBeacon/{token}")
     public ResponseEntity<?> unlockBeacon(final HttpServletRequest servletRequest,
-                                    @PathVariable final Long todoId,
-                                    @PathVariable final Long token) {
+                                          @PathVariable final Long todoId,
+                                          @PathVariable final Long token) {
         final TodoPrincipal userPrincipal = getTodoPrincipal(servletRequest);
         final Long userId = userPrincipal.getUserId();
         try {

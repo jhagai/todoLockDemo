@@ -27,7 +27,7 @@ public interface ITodoService {
     Todo tryToUpdate(Long userId, TodoDto todo) throws StaleTodoException, LockedTodoException, TodoNotFoundException;
 
     @Transactional
-    Long lock(Long userId, Long todoId) throws LockedTodoException, TodoNotFoundException, StaleTodoException;
+    Long lock(Long userId, Long todoId) throws LockedTodoException, TodoNotFoundException;
 
     @Transactional
     TodoDto refreshLock(Long userId, Long todoId, Long todoLockToken) throws LockedTodoException, TodoNotFoundException, TodoNotLockedException;

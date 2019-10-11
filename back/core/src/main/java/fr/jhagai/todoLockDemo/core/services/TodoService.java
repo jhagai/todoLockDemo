@@ -36,6 +36,10 @@ public class TodoService implements ITodoService {
     @Autowired
     private TodoLockRepository todoLockRepository;
 
+    public void setTodoLockRepository(final TodoLockRepository todoLockRepository) {
+        this.todoLockRepository = todoLockRepository;
+    }
+
     @Autowired
     private UserRepository userRepository;
 
@@ -81,8 +85,8 @@ public class TodoService implements ITodoService {
         final User user = userRepository.getOne(userId);
 
         // Add read Lock to prevent any modification while deleting the todo.
-        // final Optional<TodoLock> optionalTodoLock = todoLockRepository.findByTodoIdForRead(todoId);
-        final Optional<TodoLock> optionalTodoLock = todoLockRepository.findById(todoId);
+        final Optional<TodoLock> optionalTodoLock = todoLockRepository.findByTodoIdForRead(todoId);
+        // final Optional<TodoLock> optionalTodoLock = todoLockRepository.findById(todoId);
 
         if (optionalTodoLock.isPresent()) {
             final TodoLock todoLock = optionalTodoLock.get();
@@ -135,32 +139,54 @@ public class TodoService implements ITodoService {
         return updatedTodo;
     }
 
-    private boolean isLockedBySomeoneElse(final User user, final Todo todo) {
-        return todo.isLocked() && !user.equals(todo.getTodoLock().getUser());
-    }
-
     @Override
     @Transactional
-    public Long lock(final Long userId, final Long todoId) throws LockedTodoException, TodoNotFoundException, StaleTodoException {
+    public Long lock(final Long userId, final Long todoId) throws LockedTodoException, TodoNotFoundException {
 
         final User user = userRepository.getOne(userId);
 
         final Optional<Todo> optionalTodo = todoRepository.findById(todoId);
         final Todo todo = optionalTodo.orElseThrow(TodoNotFoundException::new);
 
-        // If someone else already owns the lock => Exception
-        if (isLockedBySomeoneElse(user, todo)) {
-            throw new LockedTodoException(TodoUtils.mapToDto(todo));
-        }
-
-        final LocalDateTime localDateTime = calcNewTimeout();
-        TodoLock todoLock = todo.getTodoLock();
+        final Optional<TodoLock> optionalTodoLock = this.todoLockRepository.findByTodoIdForWrite(todoId);
+        // final Optional<TodoLock> optionalTodoLock = this.todoLockRepository.findByTodoId(todoId);
 
         final TodoLock saved;
 
-        if (todoLock == null) {
+        final LocalDateTime localDateTime = calcNewTimeout();
+
+        if (optionalTodoLock.isPresent()) {
+
+            final TodoLock todoLock = optionalTodoLock.get();
+
+            if (todoLock.hasLock(user)) {
+                // User already owns the lock => add a new lock token.
+                todoLock.setTodo(todo);
+                todoLock.setEndDate(localDateTime);
+                todoLock.setUser(user);
+                final TodoLockToken token = new TodoLockToken();
+                token.setTodoLock(todoLock);
+                List<TodoLockToken> tokens = todoLock.getTokens();
+                tokens.add(token);
+                saved = this.todoLockRepository.saveAndFlush(todoLock);
+            } else if (todoLock.isLockedBySomeoneElse(user)) {
+                // Someone else already locks the todo => throw an exception.
+                throw new LockedTodoException();
+            } else {
+                // Delete existing lock and replace it with a new one.
+                this.todoLockRepository.delete(todoLock);
+                final TodoLockToken todoLockToken = new TodoLockToken();
+                todoLockToken.setTodoLock(todoLock);
+                todoLock.getTokens().add(todoLockToken);
+                todoLock.setTodo(todo);
+                todoLock.setEndDate(localDateTime);
+                todoLock.setUser(user);
+                saved = this.todoLockRepository.saveAndFlush(todoLock);
+            }
+
+        } else {
             // No lock on the todo => create one
-            // Concurrency is ensured by the OneToOne link
+            // Concurrency is ensured by the OneToOne link (and the Constraint).
             final TodoLock newTodoLock = new TodoLock();
             final TodoLockToken todoLockToken = new TodoLockToken();
             todoLockToken.setTodoLock(newTodoLock);
@@ -169,25 +195,6 @@ public class TodoService implements ITodoService {
             newTodoLock.setEndDate(localDateTime);
             newTodoLock.setUser(user);
             saved = this.todoLockRepository.saveAndFlush(newTodoLock);
-        } else if (todoLock.hasLock(user)) {
-            // User already owns the lock => add a new lock token.
-            todoLock.setTodo(todo);
-            todoLock.setEndDate(localDateTime);
-            todoLock.setUser(user);
-            final TodoLockToken token = new TodoLockToken();
-            token.setTodoLock(todoLock);
-            List<TodoLockToken> tokens = todoLock.getTokens();
-            tokens.add(token);
-            saved = this.todoLockRepository.saveAndFlush(todoLock);
-        } else {
-            // Delete existing lock and replace it with a new one.
-            final TodoLockToken todoLockToken = new TodoLockToken();
-            todoLockToken.setTodoLock(todoLock);
-            todoLock.setTokens(Arrays.asList(todoLockToken));
-            todoLock.setTodo(todo);
-            todoLock.setEndDate(localDateTime);
-            todoLock.setUser(user);
-            saved = this.todoLockRepository.saveAndFlush(todoLock);
         }
 
         // Pick last saved token.
@@ -202,15 +209,16 @@ public class TodoService implements ITodoService {
 
     @Override
     @Transactional
-    public TodoDto refreshLock(final Long userId, final Long todoId, final Long todoLockToken) throws TodoNotFoundException, TodoNotLockedException, LockedTodoException {
+    public TodoDto refreshLock(final Long userId, final Long todoId, final Long todoLockToken) throws TodoNotFoundException, TodoNotLockedException {
 
         final User user = userRepository.getOne(userId);
         final Optional<Todo> optionalTodo = todoRepository.findById(todoId);
 
         final Todo todo = optionalTodo.orElseThrow(TodoNotFoundException::new);
 
-        // Check that user owns the lock.
-        if (todo.hasLock(user, todoLockToken)) {
+        final Optional<TodoLock> optionalTodoLock = this.todoLockRepository.findByTodoIdForWrite(todoId);
+
+        if (optionalTodoLock.isPresent() && todo.hasLock(user, todoLockToken)) {
             final LocalDateTime newEndDate = calcNewTimeout();
             final TodoLock todoLock = todo.getTodoLock();
             todoLock.setEndDate(newEndDate);
@@ -232,21 +240,23 @@ public class TodoService implements ITodoService {
         final Todo todo = optionalTodo
                 .orElseThrow(() -> new TodoNotFoundException());
 
-        if (!todo.hasLock(user, todoLockToken)) {
-            throw new TodoNotLockedException();
-        } else {
+        final Optional<TodoLock> optionalTodoLock = this.todoLockRepository.findByTodoIdForWrite(todoId);
+
+        if (optionalTodoLock.isPresent() && todo.hasLock(user, todoLockToken)) {
             final TodoLock todoLock = todo.getTodoLock();
 
-            final List<TodoLockToken> filteredTokens = todoLock.getTokens().stream().filter(t -> !todoLockToken.equals(t.getId())).collect(Collectors.toList());
+            // Remove the lock token from list.
+            todoLock.getTokens().removeIf(t -> todoLockToken.equals(t.getId()));
 
-            if (filteredTokens.size() > 1) {
-                // There are more than one lock token => just remove the token.
-                todoLock.setTokens(filteredTokens);
+            if (todoLock.getTokens().size() > 0) {
+                // There are locks left token => just remove the token.
                 this.todoLockRepository.save(todoLock);
             } else {
                 // Only one token => delete the whole lock.
                 this.todoLockRepository.delete(todoLock);
             }
+        } else {
+            throw new TodoNotLockedException();
         }
     }
 }

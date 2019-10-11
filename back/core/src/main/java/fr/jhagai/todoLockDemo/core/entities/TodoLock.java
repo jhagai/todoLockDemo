@@ -12,7 +12,10 @@ import java.util.List;
 @Data
 @EqualsAndHashCode
 @Entity
-@Table(name = "TodoLock")
+@Table(
+        name = "TodoLock", uniqueConstraints = {
+        @UniqueConstraint(name = "todo", columnNames = {"TODO_ID"})}
+)
 public class TodoLock {
 
     @Id
@@ -20,8 +23,8 @@ public class TodoLock {
     @GeneratedValue
     private Long id;
 
-    @Version
-    private Long version;
+    // @Version
+    // private Long version;
 
     @Convert(converter = LocalDateTimeConverter.class)
     @Column()

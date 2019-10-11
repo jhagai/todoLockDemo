@@ -1,0 +1,22 @@
+{
+  "name": "front-cypress",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/preset-env": "^7.5.5",
+    "@cypress/webpack-preprocessor": "^4.1.0",
+    "babel-loader": "^8.0.6",
+    "cypress": "^3.4.1",
+    "ts-loader": "^6.0.4",
+    "typescript": "^3.5.3",
+    "webpack": "^4.39.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cypress:open": "cypress open"
+  },
+  "author": "",
+  "license": "ISC"
+}
