@@ -143,6 +143,11 @@ public class TodoService implements ITodoService {
     @Transactional
     public Long lock(final Long userId, final Long todoId) throws LockedTodoException, TodoNotFoundException {
 
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         final User user = userRepository.getOne(userId);
 
         final Optional<Todo> optionalTodo = todoRepository.findById(todoId);
