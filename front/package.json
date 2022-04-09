@@ -24,7 +24,7 @@
     "core-js": "^2.5.4",
     "font-awesome": "^4.7.0",
     "jwt-decode": "^2.2.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "ngx-take-until-destroy": "^5.4.0",
     "rxjs": "~6.2.0",
     "zone.js": "~0.8.26"
